@@ -8,7 +8,6 @@ import (
 	_ "image/gif"
 	"image/jpeg"
 	_ "image/png"
-	"io"
 	"log"
 	"net/http"
 	"os"

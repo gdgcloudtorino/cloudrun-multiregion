@@ -12,7 +12,7 @@ SERVICE_NAME="gcs-proxy"
 
 # Regione per il deploy (puoi scegliere quella che preferisci)
 REGION="europe-west8"
-
+REGION_2="us-central1"  # Esempio: Iowa
 # !! IMPORTANTE !! Sostituisci con il nome del tuo bucket GCS privato.
 GCS_BUCKET_NAME=$(gcloud config get-value project)
 
@@ -53,5 +53,11 @@ gcloud run deploy ${SERVICE_NAME} \
   --set-env-vars="GCS_BUCKET_NAME=${GCS_BUCKET_NAME}" \
   --platform managed
 
+gcloud run deploy ${SERVICE_NAME} \
+  --image ${IMAGE_NAME} \
+  --region ${REGION_2} \
+  --allow-unauthenticated \
+  --set-env-vars="GCS_BUCKET_NAME=${GCS_BUCKET_NAME}" \
+  --platform managed
 echo -e "\n✅ Deploy completato con successo!"
 echo "Assicurati che l'account di servizio di Cloud Run abbia i permessi di lettura per il bucket '${GCS_BUCKET_NAME}'."

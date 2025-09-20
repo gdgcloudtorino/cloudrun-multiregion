@@ -7,8 +7,7 @@ APP_REGION_1="europe-west8"
 APP_REGION_2="us-central1"
 
 # TODO: Replace with your gcs-proxy service name and region
-GCS_PROXY_SERVICE_NAME="your-gcs-proxy-service-name"
-GCS_PROXY_REGION="your-gcs-proxy-region"
+GCS_PROXY_SERVICE_NAME="gcs-proxy"
 
 
 # --- DYNAMICALLY GET SERVICE URLS ---
@@ -16,13 +15,10 @@ echo "--- Getting service URLs ---"
 APP_REGION_URL_1=$(gcloud run services describe ${APP_REGION_SERVICE_NAME} --platform managed --region ${APP_REGION_1} --format 'value(status.url)')/api/region
 APP_REGION_URL_2=$(gcloud run services describe ${APP_REGION_SERVICE_NAME} --platform managed --region ${APP_REGION_2} --format 'value(status.url)')/api/region
 
-if [ "${GCS_PROXY_SERVICE_NAME}" != "your-gcs-proxy-service-name" ] && [ "${GCS_PROXY_REGION}" != "your-gcs-proxy-region" ]; then
-    GCS_PROXY_URL=$(gcloud run services describe ${GCS_PROXY_SERVICE_NAME} --platform managed --region ${GCS_PROXY_REGION} --format 'value(status.url)')
-else
-    GCS_PROXY_URL="https://your-gcs-proxy-service-url"
-fi
+GCS_PROXY_URL_1=$(gcloud run services describe ${GCS_PROXY_SERVICE_NAME} --platform managed --region ${APP_REGION_1} --format 'value(status.url)')/storage/test_1.png
+GCS_PROXY_URL_2=$(gcloud run services describe ${GCS_PROXY_SERVICE_NAME} --platform managed --region ${APP_REGION_2} --format 'value(status.url)')/storage/test_1.png
+
 echo "--------------------------"
-echo
 
 # --- FUNCTIONS ---
 
@@ -69,12 +65,9 @@ invoke_service "${APP_REGION_URL_1}" "app-region (${APP_REGION_1})"
 invoke_service "${APP_REGION_URL_2}" "app-region (${APP_REGION_2})"
 
 # Invoke gcs-proxy service
-if [ "${GCS_PROXY_URL}" != "https://your-gcs-proxy-service-url" ]; then
-  invoke_service "${GCS_PROXY_URL}" "gcs-proxy"
-else
-  echo "--- Skipping gcs-proxy ---"
-  echo "Please replace 'your-gcs-proxy-service-name' and 'your-gcs-proxy-region' in this script."
-  echo "-------------------------------------"
-fi
+invoke_service "${GCS_PROXY_URL_1}" "app-region (${APP_REGION_1})"
+
+# Invoke app-region service in region 2
+invoke_service "${GCS_PROXY_URL_2}" "app-region (${APP_REGION_2})"
 
 echo "--- Test Complete ---"
