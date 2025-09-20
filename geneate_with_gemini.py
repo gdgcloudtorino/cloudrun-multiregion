@@ -1,12 +1,13 @@
 # To run this code you need to install the following dependencies:
 # pip install google-genai
-
+import argparse
 import base64
 import mimetypes
 import os
 from google import genai
 from google.genai import types
-
+from google.cloud import storage
+from google.cloud.exceptions import NotFound
 
 
 def upload_to_gcs(bucket_name, image, blob_name):
@@ -15,7 +16,7 @@ def upload_to_gcs(bucket_name, image, blob_name):
     """
     try:
         # The image data is in a BytesIO wrapper, access it with _image_bytes
-        image_bytes = image._image_bytes
+        image_bytes = image
         
         storage_client = storage.Client()
         bucket = storage_client.bucket(bucket_name)
@@ -75,7 +76,7 @@ def generate(args):
             continue
         if chunk.candidates[0].content.parts[0].inline_data and chunk.candidates[0].content.parts[0].inline_data.data:
             inline_data = chunk.candidates[0].content.parts[0].inline_data
-            data_buffer = inline_data.data
+            img = inline_data.data
             bucket_name = args.project_id
             filename = args.output
             upload_to_gcs(bucket_name, img, filename)   

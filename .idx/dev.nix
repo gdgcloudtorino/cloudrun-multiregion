@@ -42,8 +42,7 @@
     workspace = {
       # Runs when a workspace is first created
       onCreate = {
-        # Example: install JS dependencies from NPM
-        # npm-install = "npm install";
+        pip-install = "pip install google-genai google-cloud-aiplatform google-cloud-storage";
       };
       # Runs when the workspace is (re)started
       onStart = {
