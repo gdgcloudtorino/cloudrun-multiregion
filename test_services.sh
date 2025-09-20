@@ -64,7 +64,7 @@ get_image() {
   START_TIME=$(date +%s.%N)
 
   # Invoke the service using curl
-  RESPONSE=$(curl -s -w "\nHTTP_CODE:%{http_code}" "${URL}")
+  RESPONSE=$(curl -o test_1.jpeg -s -w "\nHTTP_CODE:%{http_code}" "${URL}")
 
   # Get the end time
   END_TIME=$(date +%s.%N)
@@ -73,7 +73,7 @@ get_image() {
   EXECUTION_TIME=$(echo "${END_TIME} ${START_TIME}" | awk '{printf "%.9f", $1 - $2}')
 
   # Extract the body and HTTP code
-  BODY=$(echo "${RESPONSE}" | sed '$d')
+  #BODY=$(echo "${RESPONSE}" | sed '$d')
   HTTP_CODE=$(echo "${RESPONSE}" | tail -n1 | cut -d: -f2)
 
   # Print the results
