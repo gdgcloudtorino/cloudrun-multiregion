@@ -6,12 +6,6 @@ FROM golang:1.21-alpine as builder
 # Impostiamo la directory di lavoro all'interno del container
 WORKDIR /app
 
-# Copiamo i file go.mod e go.sum per scaricare le dipendenze
-COPY go.mod go.sum ./
-
-# Scarichiamo le dipendenze. Verranno messe in cache se i file mod/sum non cambiano.
-RUN go mod download
-
 # Copiamo il resto del codice sorgente
 COPY . .
 

@@ -39,7 +39,7 @@ fi
 
 # 1. BUILD: Costruisce l'immagine dalla cartella app-proxy
 echo -e "\n--- Fase 1: Build dell'immagine container ---"
-gcloud builds submit ./app-proxy --tag ${IMAGE_NAME}
+gcloud builds submit . --tag ${IMAGE_NAME}
 echo "Build completata con successo: ${IMAGE_NAME}"
 
 # 2. DEPLOY: Esegue il deploy su Cloud Run, passando il nome del bucket come variabile d'ambiente.

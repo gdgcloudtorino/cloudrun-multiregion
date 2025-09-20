@@ -63,7 +63,7 @@ fi
 
 # 1. BUILD: Costruisce l'immagine con Cloud Build e la pusha su Artifact Registry
 echo -e "\n--- Fase 1: Build dell'immagine container ---"
-gcloud builds submit ./app --tag ${IMAGE_NAME}
+gcloud builds submit . --tag ${IMAGE_NAME}
 echo "Build completata con successo: ${IMAGE_NAME}"
 
 # 2. DEPLOY: Esegue il deploy della stessa immagine su due regioni diverse
