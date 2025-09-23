@@ -2,12 +2,10 @@ package main
 
 import (
 	"encoding/json"
-	"io"
 	"log"
 	"net/http"
 	"os"
-	"strings"
-	"time"
+	"strconv"
 )
 
 var (
@@ -17,7 +15,7 @@ var (
 
 func main() {
 	// Pre-carica la regione all'avvio dell'applicazione.
-	regionCache = getRegion()
+	regionCache = os.Getenv("REGION")
 
 	http.HandleFunc("/healthz", healthCheckHandler)
 	http.HandleFunc("/api/region", regionHandler)
@@ -56,55 +54,15 @@ func healthCheckHandler(w http.ResponseWriter, r *http.Request) {
 // regionHandler gestisce le richieste in ingresso e risponde con la regione.
 func regionHandler(w http.ResponseWriter, r *http.Request) {
 	hostname, _ := os.Hostname()
+	ko := os.Getenv("SIMULATE_FAILURE") == "true"
+	status := !ko
 	response := map[string]string{
 		"message":  "Hello from the multi-region demo!",
 		"region":   regionCache,
-		"hostname": hostname, // Utile per vedere se l'istanza cambia
+		"hostname": hostname,
+		"status":   strconv.FormatBool(status),
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
-}
-
-// getRegion recupera la regione dal metadata server di GCP.
-// Restituisce "local" se non riesce a recuperare la regione (es. in esecuzione locale).
-func getRegion() string {
-	metadataURL := "http://metadata.google.internal/computeMetadata/v1/instance/region"
-
-	client := &http.Client{
-		Timeout: 2 * time.Second, // Evita attese lunghe se il server non è raggiungibile
-	}
-	req, err := http.NewRequest("GET", metadataURL, nil)
-	if err != nil {
-		log.Printf("Non è stato possibile creare la richiesta al metadata server: %v", err)
-		return "local"
-	}
-
-	// L'header Metadata-Flavor è obbligatorio.
-	req.Header.Set("Metadata-Flavor", "Google")
-
-	resp, err := client.Do(req)
-	if err != nil {
-		log.Printf("Non è stato possibile contattare il metadata server (probabilmente stai eseguendo in locale): %v", err)
-		return "local"
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		log.Printf("Il metadata server ha risposto con status non-200: %d", resp.StatusCode)
-		return "local"
-	}
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		log.Printf("Impossibile leggere la risposta dal metadata server: %v", err)
-		return "local"
-	}
-
-	// La risposta è nel formato "projects/PROJECT_NUMBER/regions/REGION". Vogliamo solo l'ultima parte.
-	parts := strings.Split(string(body), "/")
-	region := parts[len(parts)-1]
-
-	log.Printf("Regione recuperata con successo: %s", region)
-	return region
 }

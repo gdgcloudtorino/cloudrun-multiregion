@@ -66,14 +66,3 @@ echo -e "\n--- Fase 1: Build dell'immagine container ---"
 gcloud builds submit . --tag ${IMAGE_NAME}
 echo "Build completata con successo: ${IMAGE_NAME}"
 
-# 2. DEPLOY: Esegue il deploy della stessa immagine su due regioni diverse
-echo -e "\n--- Fase 2: Deploy su Cloud Run ---"
-
-echo "Deploy in ${REGION_1}..."
-gcloud run deploy ${SERVICE_NAME} --image ${IMAGE_NAME} --region ${REGION_1} --allow-unauthenticated --platform managed
-
-echo "Deploy in ${REGION_2}..."
-gcloud run deploy ${SERVICE_NAME} --image ${IMAGE_NAME} --region ${REGION_2} --allow-unauthenticated --platform managed
-
-echo -e "\n✅ Deploy completato con successo!"
-echo "I tuoi servizi sono pronti per essere aggiunti come backend al Global Load Balancer."

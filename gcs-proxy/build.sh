@@ -41,23 +41,3 @@ fi
 echo -e "\n--- Fase 1: Build dell'immagine container ---"
 gcloud builds submit . --tag ${IMAGE_NAME}
 echo "Build completata con successo: ${IMAGE_NAME}"
-
-# 2. DEPLOY: Esegue il deploy su Cloud Run, passando il nome del bucket come variabile d'ambiente.
-echo -e "\n--- Fase 2: Deploy su Cloud Run ---"
-
-echo "Deploy in ${REGION}..."
-gcloud run deploy ${SERVICE_NAME} \
-  --image ${IMAGE_NAME} \
-  --region ${REGION} \
-  --allow-unauthenticated \
-  --set-env-vars="GCS_BUCKET_NAME=${GCS_BUCKET_NAME}" \
-  --platform managed
-
-gcloud run deploy ${SERVICE_NAME} \
-  --image ${IMAGE_NAME} \
-  --region ${REGION_2} \
-  --allow-unauthenticated \
-  --set-env-vars="GCS_BUCKET_NAME=${GCS_BUCKET_NAME}" \
-  --platform managed
-echo -e "\n✅ Deploy completato con successo!"
-echo "Assicurati che l'account di servizio di Cloud Run abbia i permessi di lettura per il bucket '${GCS_BUCKET_NAME}'."

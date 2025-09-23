@@ -1,6 +1,9 @@
 .env
 GEMINI.md
-app-server
-gcs-proxy
+app-server/app-server
+gcs-proxy/gcs-proxy
 venv
 test_*.jpeg
+.terraform
+terraform.tfstate*
+.terraform.lock.hcl
