@@ -34,5 +34,5 @@ variable "region_2" {
 
 variable "artifact_registry_location" {
   description = "Location for the artifact registry"
-  default = "europe-west8"
+  default     = "europe-west8"
 }

@@ -32,3 +32,13 @@ resource "google_cloud_run_v2_service" "service" {
     }
   }
 }
+
+# https://cloud.google.com/run/docs/authenticating/public?hl=it#terraform
+resource "google_cloud_run_service_iam_binding" "default" {
+  location = google_cloud_run_v2_service.service.location
+  service  = google_cloud_run_v2_service.service.name
+  role     = "roles/run.invoker"
+  members = [
+    "allUsers"
+  ]
+}

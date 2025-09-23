@@ -12,72 +12,72 @@ resource "google_compute_global_address" "default" {
   name = "multi-region-lb-ip"
 }
 module "app_region_eu" {
-  source = "../app-region"
+  source     = "../app-region"
   project_id = var.project_id
-  region = var.region_1
+  region     = var.region_1
 }
 
 module "app_region_us" {
-  source = "../app-region"
+  source     = "../app-region"
   project_id = var.project_id
-  region = var.region_2
+  region     = var.region_2
 }
 
 module "gcs_proxy_eu" {
-  source = "../gcs-proxy"
+  source     = "../gcs-proxy"
   project_id = var.project_id
-  region = var.region_1
+  region     = var.region_1
   gcs_bucket = var.gcs_bucket
 }
 
 module "gcs_proxy_us" {
-  source = "../gcs-proxy"
+  source     = "../gcs-proxy"
   project_id = var.project_id
-  region = var.region_2
+  region     = var.region_2
   gcs_bucket = var.gcs_bucket
 }
 
 # Create two serverless network endpoint groups (NEGs)
 # one for each regional Cloud Run service
 resource "google_compute_region_network_endpoint_group" "neg_1" {
-  name     = "multi-region-neg-1"
-  region   = var.region_1
-  provider = google-beta
+  name                  = "multi-region-neg-1"
+  region                = var.region_1
+  provider              = google-beta
   network_endpoint_type = "SERVERLESS"
-  project  = data.google_project.project.project_id
+  project               = data.google_project.project.project_id
   cloud_run {
     service = var.service_name
   }
 }
 
 resource "google_compute_region_network_endpoint_group" "neg_2" {
-  name     = "multi-region-neg-2"
-  region   = var.region_2
-  provider = google-beta
+  name                  = "multi-region-neg-2"
+  region                = var.region_2
+  provider              = google-beta
   network_endpoint_type = "SERVERLESS"
-  project  = data.google_project.project.project_id
+  project               = data.google_project.project.project_id
   cloud_run {
     service = var.service_name
   }
 }
 
 resource "google_compute_region_network_endpoint_group" "gsc_proxy_neg_1" {
-  name     = "gcs-proxy-region-neg-1"
-  region   = var.region_1
-  provider = google-beta
+  name                  = "gcs-proxy-region-neg-1"
+  region                = var.region_1
+  provider              = google-beta
   network_endpoint_type = "SERVERLESS"
-  project  = data.google_project.project.project_id
+  project               = data.google_project.project.project_id
   cloud_run {
     service = var.gcs_proxy_service_name
   }
 }
 
 resource "google_compute_region_network_endpoint_group" "gsc_proxy_neg_2" {
-  name     = "gcs-proxy-region-neg-2"
-  region   = var.region_2
-  provider = google-beta
+  name                  = "gcs-proxy-region-neg-2"
+  region                = var.region_2
+  provider              = google-beta
   network_endpoint_type = "SERVERLESS"
-  project  = data.google_project.project.project_id
+  project               = data.google_project.project.project_id
   cloud_run {
     service = var.gcs_proxy_service_name
   }
@@ -117,15 +117,19 @@ resource "google_compute_backend_service" "gsc_proxy" {
 resource "google_compute_url_map" "default" {
   name            = "multi-region-url-map"
   default_service = google_compute_backend_service.app_region.id
+  host_rule {
+    hosts       = ["*"]
+    path_matcher = "multi-region-path-matcher"
+  }
   path_matcher {
     name = "multi-region-path-matcher"
     default_service = google_compute_backend_service.app_region.id
     path_rule {
-      paths   = ["/api/region"]
+      paths = ["/api/region"]
       service = google_compute_backend_service.app_region.id
     }
     path_rule {
-      paths   = ["/storage"]
+      paths = ["/storage"]
       service = google_compute_backend_service.gsc_proxy.id
     }
   }

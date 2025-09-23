@@ -75,18 +75,18 @@ get_image() {
 echo "--- Service Invocation Test Script ---"
 
 # Invoke app-region service in region 1
-invoke_service "${APP_REGION_EU}" "app-region (${APP_REGION_1})"
+invoke_service "${APP_REGION_EU}/api/region" "app-region (${APP_REGION_1})"
 
 # Invoke app-region service in region 2
-invoke_service "${APP_REGION_US}" "app-region (${APP_REGION_2})"
+invoke_service "${APP_REGION_US}/api/region" "app-region (${APP_REGION_2})"
 
 invoke_service "http://${LOAD_BALANCER_IP}/api/region" "Load Balancer"
 
 # Invoke gcs-proxy service
-get_image "${GCS_PROXY_EU}" "app-region (${APP_REGION_1})"
+get_image "${GCS_PROXY_EU}/storage/test_1.jpeg" "app-region (${APP_REGION_1})"
 
 # Invoke app-region service in region 2
-get_image "${GCS_PROXY_US}" "app-region (${APP_REGION_2})"
+get_image "${GCS_PROXY_US}/storage/test_1.jpeg" "app-region (${APP_REGION_2})"
 
 # invoke with a load balancer
 get_image "http://${LOAD_BALANCER_IP}/storage/test_1.jpeg" "app-region (${APP_REGION_2})"
