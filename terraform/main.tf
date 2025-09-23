@@ -129,7 +129,7 @@ resource "google_compute_url_map" "default" {
       service = google_compute_backend_service.app_region.id
     }
     path_rule {
-      paths = ["/storage"]
+      paths = ["/storage/*"]
       service = google_compute_backend_service.gsc_proxy.id
     }
   }
