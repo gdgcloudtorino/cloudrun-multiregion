@@ -6,20 +6,20 @@ output "load_balancer_ip" {
 
 output "app_region_us" {
   description = "The URL of the US Cloud Run service."
-  value       = google_cloud_run_v2_service.default_us.uri
+  value       = google_cloud_run_v2_service.app_region_us.endpoint
 }
 
 output "app_region_eu" {
   description = "The URL of the EU Cloud Run service."
-  value       = google_cloud_run_v2_service.default_eu.uri
+  value       = google_cloud_run_v2_service.app_region_eu.endpoint
 }
 
 output "gcs_proxy_us" {
   description = "The URL of the US GCS proxy service."
-  value       = google_cloud_run_v2_service.proxy_us.uri
+  value       = google_cloud_run_v2_service.gcs_proxy_us.endpoint
 }
 
 output "gcs_proxy_eu" {
   description = "The URL of the EU GCS proxy service."
-  value       = google_cloud_run_v2_service.proxy_eu.uri
+  value       = google_cloud_run_v2_service.gcs_proxy_eu.endpoint
 }

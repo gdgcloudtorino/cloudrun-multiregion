@@ -29,6 +29,7 @@ module "gcs_proxy_eu" {
   region = var.region_1
   gcs_bucket = var.gcs_bucket
 }
+
 module "gcs_proxy_us" {
   source = "../gcs-proxy"
   project_id = var.project_id
