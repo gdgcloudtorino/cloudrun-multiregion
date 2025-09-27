@@ -3,14 +3,28 @@ import os
 from flask import Flask, jsonify, request
 import psycopg2
 from pgvector.psycopg2 import register_vector
-import google.generativeai as genai
-
+from google import genai
+from google.genai.types import EmbedContentConfig
 app = Flask(__name__)
-
+# AttributeError: module 'google.generativeai' has no attribute 'get_embedding_model'
 # Configure the generative AI model
-genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
-model = genai.get_embedding_model("models/embedding-001")
-
+client = genai.Client(
+        api_key=os.environ.get("GEMINI_API_KEY"),
+    )
+model="gemini-embedding-001"
+def embed_content(model,content):
+    response = client.models.embed_content(
+        model=model,
+        contents=[
+            content,
+        ],
+        config=EmbedContentConfig(
+            #task_type="RETRIEVAL_DOCUMENT",  # Optional
+            #output_dimensionality=3072,  # Optional
+            #title="Game description",  # Optional
+        ),
+    )
+    return response.embeddings    
 def get_db_connection():
     conn = psycopg2.connect(
         host=os.environ.get('DB_HOST'),
@@ -41,8 +55,8 @@ def get_games():
 
         if 'q' in request.args:
             query = request.args['q']
-            embedding = genai.embed_content(model=model, content=query)["embedding"]
-            cur.execute("SELECT * FROM games ORDER BY embedding <=> %s LIMIT 5;", (embedding,))
+            embedding = embed_content(model=model, content=query).
+            cur.execute("SELECT * FROM games ORDER BY game_embedding <=> %s LIMIT 5;", (embedding,))
         else:
             cur.execute('SELECT * FROM games;')
 
@@ -70,13 +84,13 @@ def create_game():
         if not name or not description:
             return jsonify({'error': 'Name and description are required.'}), 400
 
-        embedding = genai.embed_content(model=model, content=description)["embedding"]
+        embedding = embed_content(model=model, content=description)["embedding"]
 
         conn = get_db_connection()
         cur = conn.cursor()
         cur.execute(
-            "INSERT INTO games (name, description, embedding) VALUES (%s, %s, %s) RETURNING *;",
-            (name, description, embedding)
+            "INSERT INTO games (name, description) VALUES (%s, %s) RETURNING *;",
+            (name, description)
         )
         new_game = cur.fetchone()
         conn.commit()

@@ -9,6 +9,11 @@ resource "google_sql_database_instance" "default" {
   settings {
     tier = var.tier
     edition = "ENTERPRISE"
+    enable_google_ml_integration = true
+    database_flags {
+      name = "cloudsql.enable_google_ml_integration"
+      value = "on"
+    }
     ip_configuration {
       ipv4_enabled = true
       authorized_networks {
