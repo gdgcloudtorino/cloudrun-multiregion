@@ -55,7 +55,8 @@ def get_games():
 
         if 'q' in request.args:
             query = request.args['q']
-            embedding = embed_content(model=model, content=query)
+            embedding = embed_content(model=model, content=query)[0].values
+            # {"error":"can't adapt type 'ContentEmbedding'"}
             cur.execute("SELECT * FROM games ORDER BY game_embedding <=> %s LIMIT 5;", (embedding,))
         else:
             cur.execute('SELECT * FROM games;')

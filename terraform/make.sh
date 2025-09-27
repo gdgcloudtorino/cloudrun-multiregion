@@ -15,12 +15,12 @@ gcloud run jobs executee db-importer-job --region=$APP_REGION_EU
 # Export the variables and save them to a .env file
 echo "Exporting Terraform outputs to ../.env"
 {
-  echo "PROJECT_ID=${PROJECT_ID}"
-  echo "LOAD_BALANCER_IP=${LOAD_BALANCER_IP}"
-  echo "APP_REGION_US=${APP_REGION_US}"
-  echo "APP_REGION_EU=${APP_REGION_EU}"
-  echo "GCS_PROXY_US=${GCS_PROXY_US}"
-  echo "GCS_PROXY_EU=${GCS_PROXY_EU}"
+  echo "export PROJECT_ID=${PROJECT_ID}"
+  echo "export LOAD_BALANCER_IP=${LOAD_BALANCER_IP}"
+  echo "export APP_REGION_US=${APP_REGION_US}"
+  echo "export APP_REGION_EU=${APP_REGION_EU}"
+  echo "export GCS_PROXY_US=${GCS_PROXY_US}"
+  echo "export GCS_PROXY_EU=${GCS_PROXY_EU}"
 } > ../.env
 
 # Export for the current session
