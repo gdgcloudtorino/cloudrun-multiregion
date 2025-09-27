@@ -1,9 +1,15 @@
 
 import os
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 import psycopg2
+from pgvector.psycopg2 import register_vector
+import google.generativeai as genai
 
 app = Flask(__name__)
+
+# Configure the generative AI model
+genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
+model = genai.get_embedding_model("models/embedding-001")
 
 def get_db_connection():
     conn = psycopg2.connect(
@@ -12,6 +18,7 @@ def get_db_connection():
         user=os.environ.get('DB_USER'),
         password=os.environ.get('DB_PASS')
     )
+    register_vector(conn)
     return conn
 
 @app.route('/healthz')
@@ -19,7 +26,6 @@ def healthz():
     try:
         conn = get_db_connection()
         cur = conn.cursor()
-        # Execute a simple query to check the database connection
         cur.execute('SELECT 1;')
         cur.close()
         conn.close()
@@ -32,11 +38,23 @@ def get_games():
     try:
         conn = get_db_connection()
         cur = conn.cursor()
-        cur.execute('SELECT * FROM games;')
+
+        if 'q' in request.args:
+            query = request.args['q']
+            embedding = genai.embed_content(model=model, content=query)["embedding"]
+            cur.execute("SELECT * FROM games ORDER BY embedding <=> %s LIMIT 5;", (embedding,))
+        else:
+            cur.execute('SELECT * FROM games;')
+
         games = cur.fetchall()
         cur.close()
         conn.close()
-        return jsonify(games)
+
+        # Convert the results to a list of dictionaries
+        columns = [desc[0] for desc in cur.description]
+        games_list = [dict(zip(columns, row)) for row in games]
+        return jsonify(games_list)
+
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
