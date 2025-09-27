@@ -14,7 +14,7 @@ SERVICE_NAME="gcs-proxy"
 
 # Nome del repository in Artifact Registry
 AR_REPO="cloud-run-source-deploy"
-AR_LOCATION=${REGION}
+AR_LOCATION="europe-west8"
 
 # Nome completo dell'immagine container
 IMAGE_NAME="${AR_LOCATION}-docker.pkg.dev/${PROJECT_ID}/${AR_REPO}/${SERVICE_NAME}:latest"

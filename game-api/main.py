@@ -33,7 +33,7 @@ def healthz():
     except Exception as e:
         return jsonify({'status': 'error', 'database': 'unhealthy', 'error': str(e)}), 503
 
-@app.route('/api/games')
+@app.route('/api/games', methods=['GET'])
 def get_games():
     try:
         conn = get_db_connection()
@@ -47,13 +47,48 @@ def get_games():
             cur.execute('SELECT * FROM games;')
 
         games = cur.fetchall()
+        
+        # Get column names from the cursor description
+        columns = [desc[0] for desc in cur.description]
+        games_list = [dict(zip(columns, row)) for row in games]
+
         cur.close()
         conn.close()
 
-        # Convert the results to a list of dictionaries
-        columns = [desc[0] for desc in cur.description]
-        games_list = [dict(zip(columns, row)) for row in games]
         return jsonify(games_list)
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/games', methods=['POST'])
+def create_game():
+    try:
+        data = request.get_json()
+        name = data.get('name')
+        description = data.get('description')
+
+        if not name or not description:
+            return jsonify({'error': 'Name and description are required.'}), 400
+
+        embedding = genai.embed_content(model=model, content=description)["embedding"]
+
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute(
+            "INSERT INTO games (name, description, embedding) VALUES (%s, %s, %s) RETURNING *;",
+            (name, description, embedding)
+        )
+        new_game = cur.fetchone()
+        conn.commit()
+
+        # Get column names from the cursor description
+        columns = [desc[0] for desc in cur.description]
+        new_game_dict = dict(zip(columns, new_game))
+
+        cur.close()
+        conn.close()
+
+        return jsonify(new_game_dict), 201
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500

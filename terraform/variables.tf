@@ -31,8 +31,18 @@ variable "region_2" {
   type        = string
   default     = "us-central1"
 }
-
+variable "artifact_registry_name" {
+    default = "cloud-run-source-deploy"
+  
+}
 variable "artifact_registry_location" {
   description = "Location for the artifact registry"
   default     = "europe-west8"
 }
+/*
+variable "gemini_api_key" {
+  description = "The API key for the Gemini API."
+  type        = string
+  sensitive   = true
+}
+*/

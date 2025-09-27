@@ -11,6 +11,35 @@ data "google_project" "project" {}
 resource "google_compute_global_address" "default" {
   name = "multi-region-lb-ip"
 }
+
+resource "google_apikeys_key" "gemini" {
+  name         = "gemini-api-key"
+  
+  restrictions {
+        # Example of whitelisting Maps Javascript API and Places API only
+        api_targets {
+            service = "generativelanguage.googleapis.com"
+        }
+  }
+}
+
+# Create a secret for the Gemini API key
+resource "google_secret_manager_secret" "gemini_api_key" {
+  secret_id = "gemini-api-key"
+  project   = var.project_id
+
+  replication {
+    auto {
+      
+    }
+  }
+}
+
+resource "google_secret_manager_secret_version" "gemini_api_key" {
+  secret      = google_secret_manager_secret.gemini_api_key.id
+  secret_data = google_apikeys_key.gemini.key_string
+}
+
 module "app_region_eu" {
   source     = "../app-region"
   project_id = var.project_id
@@ -47,7 +76,18 @@ module "game_api_eu" {
   project_id = var.project_id
   region     = var.region_1
   db_password_secret_id = module.game_db.secret_db_password
-  gemini_api_key_secret_id = "fixme"
+  gemini_api_key_secret_id = google_secret_manager_secret.gemini_api_key.secret_id
+  db_host = module.game_db.db_host
+  db_user =  module.game_db.db_user
+  db_name = module.game_db.db_name
+}
+
+module "game_api_us" {
+  source     = "../game-api"
+  project_id = var.project_id
+  region     = var.region_2
+  db_password_secret_id = module.game_db.secret_db_password
+  gemini_api_key_secret_id = google_secret_manager_secret.gemini_api_key.secret_id
   db_host = module.game_db.db_host
   db_user =  module.game_db.db_user
   db_name = module.game_db.db_name
@@ -176,4 +216,36 @@ data "google_iam_policy" "noauth" {
       "allUsers",
     ]
   }
+}
+
+# Build and push the db-importer container image
+resource "null_resource" "db_importer_image" {
+  triggers = {
+    main_py          = filemd5("../db-importer/main.py")
+    games_sql        = filemd5("../db-importer/games.sql")
+    dockerfile       = filemd5("../db-importer/Dockerfile")
+    requirements_txt = filemd5("../db-importer/requirements.txt")
+  }
+
+  provisioner "local-exec" {
+    command = "gcloud builds submit --project=${var.project_id} --tag gcr.io/${var.project_id}/db-importer-job:latest ../db-importer"
+  }
+}
+
+# Create a Cloud Run Job to import the database data
+module "db_importer_job" {
+  source                = "../db-importer-job"
+  project_id            = var.project_id
+  region                = var.region_1
+  db_host               = module.game_db.db_host
+  db_name               = module.game_db.db_name
+  db_user               = module.game_db.db_user
+  db_password_secret_id = module.game_db.secret_db_password
+
+  depends_on = [null_resource.db_importer_image]
+}
+
+output "db_importer_job_name" {
+  description = "The name of the database importer job."
+  value       = module.db_importer_job.job_name
 }
