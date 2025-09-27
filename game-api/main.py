@@ -28,7 +28,7 @@ def embed_content(model,content):
 def get_db_connection():
     conn = psycopg.connect(
         host=os.environ.get('DB_HOST'),
-        database=os.environ.get('DB_NAME'),
+        dbname=os.environ.get('DB_NAME'),
         user=os.environ.get('DB_USER'),
         password=os.environ.get('DB_PASS')
     )
@@ -56,7 +56,7 @@ def get_games():
         if 'q' in request.args:
             query = request.args['q']
             embedding = embed_content(model=model, content=query)[0].values
-            # {"error":"can't adapt type 'ContentEmbedding'"}
+            print(embedding)
             cur.execute("SELECT * FROM games ORDER BY game_embedding <=> %s LIMIT 5;", (embedding,))
         else:
             cur.execute('SELECT * FROM games;')
