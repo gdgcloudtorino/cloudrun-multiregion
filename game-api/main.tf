@@ -1,6 +1,5 @@
 
 # Get the project ID and region from the gcloud config
-data "google_project" "project" {}
 resource "google_service_account" "default" {
   project      = var.project_id
   account_id   = "${var.service_name}-sa-${var.region}"

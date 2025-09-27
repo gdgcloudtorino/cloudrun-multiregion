@@ -1,2 +1,3 @@
 #!/bin/bash
-terraform destroy -var="project_id=$(gcloud config get-value project)" -var="gcs_bucket=$(gcloud config get-value project)"
+source ../.env
+terraform destroy -var="project_id=${PROJECT_ID}" -var="gcs_bucket=${PROJECT_ID}"

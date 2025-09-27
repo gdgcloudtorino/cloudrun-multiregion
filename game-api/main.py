@@ -1,8 +1,8 @@
 
 import os
 from flask import Flask, jsonify, request
-import psycopg2
-from pgvector.psycopg2 import register_vector
+import psycopg
+from pgvector.psycopg import register_vector
 from google import genai
 from google.genai.types import EmbedContentConfig
 app = Flask(__name__)
@@ -26,7 +26,7 @@ def embed_content(model,content):
     )
     return response.embeddings    
 def get_db_connection():
-    conn = psycopg2.connect(
+    conn = psycopg.connect(
         host=os.environ.get('DB_HOST'),
         database=os.environ.get('DB_NAME'),
         user=os.environ.get('DB_USER'),
