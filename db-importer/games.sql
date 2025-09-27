@@ -21,5 +21,5 @@ La mappa astratta del gioco coinvolge un teatro strategico che rappresenta l''Eu
 Tutte le tabelle necessarie per il gameplay sono stampate sul tabellone di gioco. Congress of Vienna riproduce lo spirito di Churchill nelle meccaniche e nell''organizzazione delle sue regole, nei display diplomatici e nella sua mappa militare. Questa attenzione ai dettagli rende il gioco non solo una sfida strategica, ma anche un''esperienza immersiva nel contesto storico del periodo napoleonico. Acquista Congress of Vienna
 Se sei un appassionato di giochi di strategia diplomatica e ti affascina l''era napoleonica, Congress of Vienna è un''aggiunta imperdibile alla tua collezione. Acquista ora e immergiti in uno dei periodi più tumultuosi della storia europea.'
 );
-
-UPDATE games SET game_embedding = embedding('gemini-embedding-001', description) WHERE game_embedding is null;
+-- the function is available only on cloud sql with ml enabled
+--UPDATE games SET game_embedding = embedding('gemini-embedding-001', description) WHERE game_embedding is null;
