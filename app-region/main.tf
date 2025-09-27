@@ -15,6 +15,10 @@ resource "google_cloud_run_v2_service" "service" {
       name = "REGION"
       value = var.region
     }
+    env {
+      name = "SIMULATE_FAILURE"
+      value = var.failover
+    }
     startup_probe {
         initial_delay_seconds = 0
         timeout_seconds = 1
@@ -25,6 +29,8 @@ resource "google_cloud_run_v2_service" "service" {
         }
       }
       liveness_probe {
+        failure_threshold = 1
+        period_seconds = 1
         http_get {
           path = "/healthz"
         }
