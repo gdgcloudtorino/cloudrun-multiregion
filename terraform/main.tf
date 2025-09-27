@@ -36,6 +36,22 @@ module "gcs_proxy_us" {
   region     = var.region_2
   gcs_bucket = "${var.gcs_bucket}"
 }
+module "game_db" {
+  source = "../database"
+  project_id = var.project_id
+  region     = var.region_1
+}
+
+module "game_api_eu" {
+  source     = "../game-api"
+  project_id = var.project_id
+  region     = var.region_1
+  db_password_secret_id = module.game_db.secret_db_password
+  gemini_api_key_secret_id = "fixme"
+  db_host = module.game_db.db_host
+  db_user =  module.game_db.db_user
+  db_name = module.game_db.db_name
+}
 
 # Create two serverless network endpoint groups (NEGs)
 # one for each regional Cloud Run service

@@ -6,7 +6,9 @@ output "db_host" {
 output "db_user" {
   value = google_sql_user.default.name
 }
-
+output "db_name" {
+  value = google_sql_database.default.name
+}
 output "secret_db_password" {
   value = google_secret_manager_secret.db_password.id
 }

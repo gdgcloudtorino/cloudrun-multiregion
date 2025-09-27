@@ -16,7 +16,3 @@ variable "tier" {
   type = string
   description = "The Cloud SQL Tier database"
 }
-variable "network_name" {
-  description = "The name of the VPC network to connect to."
-  type        = string
-}

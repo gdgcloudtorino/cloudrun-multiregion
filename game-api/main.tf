@@ -2,37 +2,6 @@
 # Get the project ID and region from the gcloud config
 data "google_project" "project" {}
 
-locals {
-  project_id = data.google_project.project.project_id
-  region     = "us-central1" # You can change this to your preferred region
-}
-
-# Enable necessary Google Cloud APIs
-resource "google_project_service" "apis" {
-  for_each = toset([
-    "sqladmin.googleapis.com",
-    "run.googleapis.com",
-    "secretmanager.googleapis.com",
-    "artifactregistry.googleapis.com"
-  ])
-  project = var.project_id
-  service = each.key
-}
-
-
-
-# Create a secret for the Gemini API key
-resource "google_secret_manager_secret" "gemini_api_key" {
-  secret_id = "gemini-api-key"
-  project   = var.project_id
-
-  replication {
-    auto {
-      
-    }
-  }
-}
-
 # The Cloud Run service that runs the game API
 resource "google_cloud_run_v2_service" "default" {
   name     = "game-api"
@@ -45,21 +14,21 @@ resource "google_cloud_run_v2_service" "default" {
 
       env {
         name  = "DB_USER"
-        value = google_sql_user.default.name
+        value = var.db_user
       }
       env {
         name  = "DB_NAME"
-        value = google_sql_database.default.name
+        value = var.db_name
       }
       env {
         name  = "DB_HOST"
-        value = "/cloudsql/${google_sql_database_instance.default.connection_name}"
+        value = var.db_host
       }
       env {
         name = "DB_PASS"
         value_source {
           secret_key_ref {
-            secret  = google_secret_manager_secret.db_password.secret_id
+            secret  = var.db_password_secret_id
             version = "latest"
           }
         }
@@ -68,7 +37,7 @@ resource "google_cloud_run_v2_service" "default" {
         name = "GEMINI_API_KEY"
         value_source {
           secret_key_ref {
-            secret  = google_secret_manager_secret.gemini_api_key.secret_id
+            secret  = var.gemini_api_key_secret_id
             version = "latest"
           }
         }
