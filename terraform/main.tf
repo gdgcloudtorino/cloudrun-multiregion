@@ -27,14 +27,14 @@ module "gcs_proxy_eu" {
   source     = "../gcs-proxy"
   project_id = var.project_id
   region     = var.region_1
-  gcs_bucket = var.gcs_bucket
+  gcs_bucket = "${var.gcs_bucket}"
 }
 
 module "gcs_proxy_us" {
   source     = "../gcs-proxy"
   project_id = var.project_id
   region     = var.region_2
-  gcs_bucket = var.gcs_bucket
+  gcs_bucket = "${var.gcs_bucket}"
 }
 
 # Create two serverless network endpoint groups (NEGs)
@@ -160,20 +160,4 @@ data "google_iam_policy" "noauth" {
       "allUsers",
     ]
   }
-}
-
-resource "google_cloud_run_v2_service_iam_policy" "noauth_neg_1" {
-  project  = data.google_project.project.project_id
-  location = var.region_1
-  name     = var.service_name
-
-  policy_data = data.google_iam_policy.noauth.policy_data
-}
-
-resource "google_cloud_run_v2_service_iam_policy" "noauth_neg_2" {
-  project  = data.google_project.project.project_id
-  location = var.region_2
-  name     = var.service_name
-
-  policy_data = data.google_iam_policy.noauth.policy_data
 }

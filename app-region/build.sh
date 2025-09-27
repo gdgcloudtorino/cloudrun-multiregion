@@ -17,16 +17,13 @@ PROJECT_ID=$(gcloud config get project)
 # Nome del servizio Cloud Run (sarà lo stesso in entrambe le regioni)
 SERVICE_NAME="multi-region-api"
 
-# Regioni per il deploy (scegli quelle più adatte al tuo caso d'uso)
-REGION_1="europe-west8" # Esempio: Milano
-REGION_2="us-central1"  # Esempio: Iowa
 
 # Nome del repository in Artifact Registry
 AR_REPO="cloud-run-source-deploy"
 
 # Il repository di Artifact Registry deve essere creato in una regione specifica.
 # Usiamo REGION_1 come riferimento, ma è accessibile globalmente.
-AR_LOCATION=${REGION_1}
+AR_LOCATION="europe-west8" # Esempio: Milano
 
 # Nome completo dell'immagine container
 IMAGE_NAME="${AR_LOCATION}-docker.pkg.dev/${PROJECT_ID}/${AR_REPO}/${SERVICE_NAME}:latest"
@@ -37,13 +34,10 @@ echo "--- Configurazione ---"
 echo "Project ID:     ${PROJECT_ID}"
 echo "Service Name:   ${SERVICE_NAME}"
 echo "Image:          ${IMAGE_NAME}"
-echo "Region 1:       ${REGION_1}"
-echo "Region 2:       ${REGION_2}"
 echo "----------------------"
 echo
 
-# Imposta il progetto gcloud per la sessione corrente
-gcloud config set project ${PROJECT_ID}
+
 
 # Abilita le API necessarie (l'operazione viene saltata se sono già attive)
 echo "Abilitazione API necessarie (run, cloudbuild, artifactregistry)..."

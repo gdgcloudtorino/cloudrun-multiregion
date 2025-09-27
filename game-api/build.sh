@@ -7,8 +7,8 @@ set -e
 # --- CONFIGURAZIONE ---
 PROJECT_ID=$(gcloud config get-value project)
 
-# Nome del servizio per la demo del proxy
-SERVICE_NAME="gcs-proxy"
+
+SERVICE_NAME="game-api"
 
 
 
@@ -21,7 +21,7 @@ IMAGE_NAME="${AR_LOCATION}-docker.pkg.dev/${PROJECT_ID}/${AR_REPO}/${SERVICE_NAM
 
 # --- SCRIPT ---
 
-echo "--- Configurazione GCS Proxy Demo ---"
+echo "--- Configurazione Game Api Demo ---"
 echo "Project ID:     ${PROJECT_ID}"
 echo "Service Name:   ${SERVICE_NAME}"
 echo "-------------------------------------"
