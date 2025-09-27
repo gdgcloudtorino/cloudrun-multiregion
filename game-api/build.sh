@@ -14,7 +14,7 @@ SERVICE_NAME="game-api"
 
 # Nome del repository in Artifact Registry
 AR_REPO="cloud-run-source-deploy"
-AR_LOCATION=${REGION}
+AR_LOCATION="europe-west8
 
 # Nome completo dell'immagine container
 IMAGE_NAME="${AR_LOCATION}-docker.pkg.dev/${PROJECT_ID}/${AR_REPO}/${SERVICE_NAME}:latest"
@@ -24,6 +24,7 @@ IMAGE_NAME="${AR_LOCATION}-docker.pkg.dev/${PROJECT_ID}/${AR_REPO}/${SERVICE_NAM
 echo "--- Configurazione Game Api Demo ---"
 echo "Project ID:     ${PROJECT_ID}"
 echo "Service Name:   ${SERVICE_NAME}"
+echo "Image Name:     ${IMAGE_NAME}"
 echo "-------------------------------------"
 echo
 

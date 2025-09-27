@@ -8,6 +8,7 @@ resource "google_sql_database_instance" "default" {
 
   settings {
     tier = var.tier
+    edition = "ENTERPRISE"
     ip_configuration {
       ipv4_enabled = true
       authorized_networks {

@@ -3,14 +3,14 @@
 data "google_project" "project" {}
 
 # The Cloud Run service that runs the game API
-resource "google_cloud_run_v2_service" "default" {
+resource "google_cloud_run_v2_service" "service" {
   name     = "game-api"
   location = var.region
   project  = var.project_id
 
   template {
     containers {
-      image = "gcr.io/${var.project_id}/game-api:latest"
+      image = "${var.artifact_registry_location}-docker.pkg.dev/${var.project_id}/${var.artifact_name}/${var.service_name}:latest"
 
       env {
         name  = "DB_USER"
@@ -42,53 +42,38 @@ resource "google_cloud_run_v2_service" "default" {
           }
         }
       }
-    }
-
-    # Mount the Cloud SQL instance
-    volumes {
-      name = "cloudsql"
-      cloud_sql_instance {
-        instances = [google_sql_database_instance.default.connection_name]
+      startup_probe {
+        initial_delay_seconds = 0
+        timeout_seconds = 1
+        period_seconds = 3
+        failure_threshold = 1
+        tcp_socket {
+          port = 8080
+        }
       }
-    }
-  }
+      liveness_probe {
+        failure_threshold = 3
+        period_seconds = 5
+        http_get {
+          path = "/healthz"
+        }
+      }
+    }# end container
+  }#end template
 
-  depends_on = [google_project_service.apis]
-}
+    
+}# end service
 
-# Grant the Cloud Run service account access to the Cloud SQL instance
-resource "google_project_iam_member" "sql_client" {
-  project = var.project_id
-  role    = "roles/cloudsql.client"
-  member  = "serviceAccount:${google_cloud_run_v2_service.default.service_account}"
-}
 
-# Grant the Cloud Run service account access to the secrets
-resource "google_secret_manager_secret_iam_member" "db_password_accessor" {
-  project   = var.project_id
-  secret_id = google_secret_manager_secret.db_password.id
-  role      = "roles/secretmanager.secretAccessor"
-  member    = "serviceAccount:${google_cloud_run_v2_service.default.service_account}"
-}
 
-resource "google_secret_manager_secret_iam_member" "gemini_key_accessor" {
-  project   = var.project_id
-  secret_id = google_secret_manager_secret.gemini_api_key.id
-  role      = "roles/secretmanager.secretAccessor"
-  member    = "serviceAccount:${google_cloud_run_v2_service.default.service_account}"
-}
 
 # Make the Cloud Run service publicly accessible
 resource "google_cloud_run_v2_service_iam_member" "public_access" {
   project  = var.project_id
-  location = google_cloud_run_v2_service.default.location
-  name     = google_cloud_run_v2_service.default.name
+  location = google_cloud_run_v2_service.service.location
+  name     = google_cloud_run_v2_service.service.name
   role     = "roles/run.invoker"
   member   = "allUsers"
 }
 
-# Output the URL of the Cloud Run service
-output "service_url" {
-  description = "The URL of the game-api service."
-  value       = google_cloud_run_v2_service.default.uri
-}
+
