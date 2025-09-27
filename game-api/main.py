@@ -55,7 +55,7 @@ def get_games():
 
         if 'q' in request.args:
             query = request.args['q']
-            embedding = embed_content(model=model, content=query).
+            embedding = embed_content(model=model, content=query)
             cur.execute("SELECT * FROM games ORDER BY game_embedding <=> %s LIMIT 5;", (embedding,))
         else:
             cur.execute('SELECT * FROM games;')
@@ -84,13 +84,13 @@ def create_game():
         if not name or not description:
             return jsonify({'error': 'Name and description are required.'}), 400
 
-        embedding = embed_content(model=model, content=description)["embedding"]
+        embedding = embed_content(model=model, content=description)
 
         conn = get_db_connection()
         cur = conn.cursor()
         cur.execute(
-            "INSERT INTO games (name, description) VALUES (%s, %s) RETURNING *;",
-            (name, description)
+            "INSERT INTO games (name, description,game_embedding) VALUES (%s, %s) RETURNING *;",
+            (name, description,embedding)
         )
         new_game = cur.fetchone()
         conn.commit()
