@@ -20,7 +20,7 @@ def embed_content(model,content):
         ],
         config=EmbedContentConfig(
             #task_type="RETRIEVAL_DOCUMENT",  # Optional
-            #output_dimensionality=3072,  # Optional
+            output_dimensionality=768,  # must be the same length as in the DB
             #title="Game description",  # Optional
         ),
     )
@@ -45,6 +45,7 @@ def healthz():
         conn.close()
         return jsonify({'status': 'ok', 'database': 'ok'})
     except Exception as e:
+        app.logger.exception("Health check failed")
         return jsonify({'status': 'error', 'database': 'unhealthy', 'error': str(e)}), 503
 
 @app.route('/api/games', methods=['GET'])
@@ -56,9 +57,9 @@ def get_games():
         if 'q' in request.args:
             query = request.args['q']
             embedding = embed_content(model=model, content=query)[0].values
-            cur.execute("SELECT * FROM games ORDER BY game_embedding <=> %s::vector LIMIT 5;", (embedding,))
+            cur.execute("SELECT id,name,description FROM games ORDER BY game_embedding <=> %s::vector LIMIT 5;", (embedding,))
         else:
-            cur.execute('SELECT * FROM games;')
+            cur.execute('SELECT id,name,description FROM games;')
 
         games = cur.fetchall()
         
@@ -72,12 +73,13 @@ def get_games():
         return jsonify(games_list)
 
     except Exception as e:
+        app.logger.exception("Error getting games")
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/games', methods=['POST'])
 def create_game():
     try:
-        data = request.get_json()
+        data = request.get_json(force=True)
         name = data.get('name')
         description = data.get('description')
 
@@ -89,7 +91,7 @@ def create_game():
         conn = get_db_connection()
         cur = conn.cursor()
         cur.execute(
-            "INSERT INTO games (name, description, game_embedding) VALUES (%s, %s, %s::vector) RETURNING *;",
+            "INSERT INTO games (name, description, game_embedding) VALUES (%s, %s, %s::vector) RETURNING id,name,description;",
             (name, description,embedding)
         )
         new_game = cur.fetchone()
@@ -105,6 +107,7 @@ def create_game():
         return jsonify(new_game_dict), 201
 
     except Exception as e:
+        app.logger.exception("Error creating game")
         return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
