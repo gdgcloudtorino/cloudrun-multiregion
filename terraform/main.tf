@@ -88,6 +88,21 @@ resource "google_compute_region_network_endpoint_group" "neg_2" {
     service = var.service_name
   }
 }
+# Create a backend service that uses the serverless NEGs
+resource "google_compute_backend_service" "app_region" {
+  name                  = "multi-region-backend-service"
+  protocol              = "HTTP"
+  load_balancing_scheme = "EXTERNAL_MANAGED"
+  enable_cdn            = false # Set to true to enable Cloud CDN
+
+  backend {
+    group = google_compute_region_network_endpoint_group.neg_1.id
+  }
+
+  backend {
+    group = google_compute_region_network_endpoint_group.neg_2.id
+  }
+}
 
 resource "google_compute_region_network_endpoint_group" "gsc_proxy_neg_1" {
   name                  = "gcs-proxy-region-neg-1"
@@ -111,21 +126,7 @@ resource "google_compute_region_network_endpoint_group" "gsc_proxy_neg_2" {
   }
 }
 
-# Create a backend service that uses the serverless NEGs
-resource "google_compute_backend_service" "app_region" {
-  name                  = "multi-region-backend-service"
-  protocol              = "HTTP"
-  load_balancing_scheme = "EXTERNAL_MANAGED"
-  enable_cdn            = false # Set to true to enable Cloud CDN
 
-  backend {
-    group = google_compute_region_network_endpoint_group.neg_1.id
-  }
-
-  backend {
-    group = google_compute_region_network_endpoint_group.neg_2.id
-  }
-}
 resource "google_compute_backend_service" "gsc_proxy" {
   name                  = "gcs-backend-service"
   protocol              = "HTTP"
@@ -141,6 +142,47 @@ resource "google_compute_backend_service" "gsc_proxy" {
   }
 }
 
+
+
+
+resource "google_compute_region_network_endpoint_group" "game_api_eu" {
+  name                  = "game-api-region-neg-1"
+  region                = var.region_1
+  provider              = google-beta
+  network_endpoint_type = "SERVERLESS"
+  project               = data.google_project.project.project_id
+  cloud_run {
+    service = module.game_api_eu.name
+  }
+}
+
+resource "google_compute_region_network_endpoint_group" "game_api_us" {
+  name                  = "gcs-proxy-region-neg-2"
+  region                = var.region_2
+  provider              = google-beta
+  network_endpoint_type = "SERVERLESS"
+  project               = data.google_project.project.project_id
+  cloud_run {
+    service = module.game_api_us.name
+  }
+}
+
+
+resource "google_compute_backend_service" "game_api" {
+  name                  = "gcs-backend-service"
+  protocol              = "HTTP"
+  load_balancing_scheme = "EXTERNAL_MANAGED"
+  enable_cdn            = false # Set to true to enable Cloud CDN
+
+  backend {
+    group = google_compute_region_network_endpoint_group.game_api_eu.id
+  }
+
+  backend {
+    group = google_compute_region_network_endpoint_group.game_api_us.id
+  }
+}
+
 # Create a URL map to route all incoming requests to the backend service
 resource "google_compute_url_map" "default" {
   name            = "multi-region-url-map"
@@ -152,10 +194,16 @@ resource "google_compute_url_map" "default" {
   path_matcher {
     name = "multi-region-path-matcher"
     default_service = google_compute_backend_service.app_region.id
+    
     path_rule {
       paths = ["/api/region"]
       service = google_compute_backend_service.app_region.id
     }
+    path_rule {
+      paths = ["/api/games"]
+      service = google_compute_backend_service.game_api.id
+    }
+    # TODO the post must be routed only to the eu region
     path_rule {
       paths = ["/storage/*"]
       service = google_compute_backend_service.gsc_proxy.id
@@ -179,16 +227,7 @@ resource "google_compute_global_forwarding_rule" "default" {
   load_balancing_scheme = "EXTERNAL_MANAGED"
 }
 
-# Grant the load balancer's service account permission to invoke the Cloud Run services
-# This service account is automatically created by Google for the backend service
-data "google_iam_policy" "noauth" {
-  binding {
-    role = "roles/run.invoker"
-    members = [
-      "allUsers",
-    ]
-  }
-}
+
 
 # Build and push the db-importer container image
 resource "null_resource" "db_importer_image" {

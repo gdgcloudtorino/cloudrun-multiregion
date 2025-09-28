@@ -23,6 +23,8 @@ echo "Exporting Terraform outputs to ../.env"
   echo "export APP_REGION_EU=${APP_REGION_EU}"
   echo "export GCS_PROXY_US=${GCS_PROXY_US}"
   echo "export GCS_PROXY_EU=${GCS_PROXY_EU}"
+  echo "export GAME_EU=${GAME_EU}"
+  echo "export GAME_ES=${GAME_ES}"
 } > ../.env
 
 # Export for the current session
