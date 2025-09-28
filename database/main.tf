@@ -9,11 +9,13 @@ resource "google_sql_database_instance" "default" {
   settings {
     tier = var.tier
     edition = "ENTERPRISE"
+    availability_type = "ZONAL" # Required for read replicas
+    /* not supported on shared core instance
     enable_google_ml_integration = true
     database_flags {
       name = "cloudsql.enable_google_ml_integration"
       value = "on"
-    }
+    }*/
     ip_configuration {
       ipv4_enabled = true
       authorized_networks {
@@ -24,6 +26,27 @@ resource "google_sql_database_instance" "default" {
   }
 
   deletion_protection = false # Set to true for production environments
+}
+
+# Create a read replica in the US region
+resource "google_sql_database_instance" "read_replica" {
+  name                  = "${var.database_name}-replica-us"
+  database_version      = "POSTGRES_16"
+  region                = var.region_us
+  project               = var.project_id
+  master_instance_name  = google_sql_database_instance.default.name
+
+  settings {
+    tier = var.tier
+    edition = "ENTERPRISE"
+    ip_configuration {
+      ipv4_enabled = true
+      authorized_networks {
+        value = "0.0.0.0/0"
+        name  = "Allow all"
+      }
+    }
+  }
 }
 
 # Create a database within the Cloud SQL instance

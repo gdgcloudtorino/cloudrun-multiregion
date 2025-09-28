@@ -2,6 +2,9 @@
 output "db_host" {
   value = google_sql_database_instance.default.public_ip_address 
 }
+output "db_host_us" {
+  value = google_sql_database_instance.read_replica.public_ip_address 
+}
 
 output "db_user" {
   value = google_sql_user.default.name

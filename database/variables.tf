@@ -11,6 +11,11 @@ variable "region" {
   type        = string
   default     = "europe-west8"
 }
+variable "region_us" {
+  description = "The first region for the Cloud Run service."
+  type        = string
+  default     = "us-east3"
+}
 variable "tier" {
   default = "db-f1-micro"
   type = string

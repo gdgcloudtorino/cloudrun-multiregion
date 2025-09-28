@@ -23,3 +23,13 @@ output "gcs_proxy_eu" {
   description = "The URL of the EU GCS proxy service."
   value       = module.gcs_proxy_eu.endpoint
 }
+
+output "game_us" {
+  description = "The URL of the US Game service."
+  value       = module.game_api_eu.endpoint
+}
+
+output "game_eu" {
+  description = "The URL of the EU Game service."
+  value       = module.game_api_eu.endpoint
+}
