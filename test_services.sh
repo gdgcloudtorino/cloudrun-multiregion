@@ -98,7 +98,7 @@ invoke_service "${GAME_EU}/api/games?q=vienna" "game-api (${APP_REGION_1})"
 # Invoke app-region service in region 2
 invoke_service "${GAME_US}/api/games?q=vienna" "game-api (${APP_REGION_2})"
 
-invoke_service "http://${LOAD_BALANCER_IP}/api/games" "Load Balancer"
+invoke_service "http://${LOAD_BALANCER_IP}/api/games?q=vienna" "Load Balancer"
 
 
 echo "--- Test Complete ---"

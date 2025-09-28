@@ -26,7 +26,7 @@ output "gcs_proxy_eu" {
 
 output "game_us" {
   description = "The URL of the US Game service."
-  value       = module.game_api_eu.endpoint
+  value       = module.game_api_us.endpoint
 }
 
 output "game_eu" {

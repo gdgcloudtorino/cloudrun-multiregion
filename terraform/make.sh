@@ -10,8 +10,8 @@ APP_REGION_US=$(terraform output -raw app_region_us)
 APP_REGION_EU=$(terraform output -raw app_region_eu)
 GCS_PROXY_US=$(terraform output -raw gcs_proxy_us)
 GCS_PROXY_EU=$(terraform output -raw gcs_proxy_eu)
-GAME_US=$(terraform output -raw gcs_proxy_us)
-GAME_EU=$(terraform output -raw gcs_proxy_eu)
+GAME_US=$(terraform output -raw game_us)
+GAME_EU=$(terraform output -raw game_eu)
 
 # Export the variables and save them to a .env file
 echo "Exporting Terraform outputs to ../.env"
@@ -23,7 +23,7 @@ echo "Exporting Terraform outputs to ../.env"
   echo "export GCS_PROXY_US=${GCS_PROXY_US}"
   echo "export GCS_PROXY_EU=${GCS_PROXY_EU}"
   echo "export GAME_EU=${GAME_EU}"
-  echo "export GAME_ES=${GAME_ES}"
+  echo "export GAME_US=${GAME_US}"
 } > ../.env
 
 # Export for the current session
@@ -32,5 +32,7 @@ export APP_REGION_US
 export APP_REGION_EU
 export GCS_PROXY_US
 export GCS_PROXY_EU
+export GAME_EU
+export GAME_US
 
 echo "Terraform outputs have been saved to .env and exported."

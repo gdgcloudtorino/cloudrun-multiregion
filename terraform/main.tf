@@ -94,7 +94,9 @@ resource "google_compute_backend_service" "app_region" {
   protocol              = "HTTP"
   load_balancing_scheme = "EXTERNAL_MANAGED"
   enable_cdn            = false # Set to true to enable Cloud CDN
-
+  log_config {
+    enable = true
+  }
   backend {
     group = google_compute_region_network_endpoint_group.neg_1.id
   }
@@ -132,7 +134,9 @@ resource "google_compute_backend_service" "gsc_proxy" {
   protocol              = "HTTP"
   load_balancing_scheme = "EXTERNAL_MANAGED"
   enable_cdn            = false # Set to true to enable Cloud CDN
-
+  log_config {
+    enable = true
+  }
   backend {
     group = google_compute_region_network_endpoint_group.gsc_proxy_neg_1.id
   }
@@ -171,7 +175,9 @@ resource "google_compute_backend_service" "game_api_main" {
   protocol              = "HTTP"
   load_balancing_scheme = "EXTERNAL_MANAGED"
   enable_cdn            = false # Set to true to enable Cloud CDN
-
+  log_config {
+    enable = true
+  }
   backend {
     group = google_compute_region_network_endpoint_group.game_api_eu.id
   }
@@ -182,7 +188,9 @@ resource "google_compute_backend_service" "game_api" {
   protocol              = "HTTP"
   load_balancing_scheme = "EXTERNAL_MANAGED"
   enable_cdn            = false # Set to true to enable Cloud CDN
-
+  log_config {
+    enable = true
+  }
   backend {
     group = google_compute_region_network_endpoint_group.game_api_eu.id
   }
@@ -210,25 +218,62 @@ resource "google_compute_url_map" "default" {
         header_matches {
           header_name = "Method" # Match on the HTTP method pseudo-header
           exact_match = "POST"
+
         }
         prefix_match = "/api/games"
       }
-      service = google_compute_backend_service.game_api_main.id
+      route_action {
+        weighted_backend_services {
+          weight = 100
+          backend_service = google_compute_backend_service.game_api_main.id
+        }
+      }
     }
-    path_rule {
-      paths = ["/api/region"]
-      service = google_compute_backend_service.app_region.id
-    }
-    path_rule {
-      paths = ["/api/games"]
-      service = google_compute_backend_service.game_api.id
-    }
-    # TODO the post must be routed only to the eu region
-    path_rule {
-      paths = ["/storage/*"]
-      service = google_compute_backend_service.gsc_proxy.id
+    route_rules {
+      priority = 2
+      match_rules {
+        header_matches {
+          header_name = "Method" # Match on the HTTP method pseudo-header
+          exact_match = "GET"
+        }
+        prefix_match = "/api/games"
+      }
+      route_action {
+        weighted_backend_services {
+          weight = 100
+          backend_service = google_compute_backend_service.game_api.id
+        }
+      }
     }
     
+    route_rules {
+      priority = 4
+      match_rules {
+         header_matches {
+          header_name = "Method" # Match on the HTTP method pseudo-header
+          exact_match = "GET"
+        }
+        prefix_match = "/storage"
+      }
+      route_action {
+        weighted_backend_services {
+          weight = 100
+          backend_service = google_compute_backend_service.gsc_proxy.id
+        }
+      }
+    }
+    route_rules {
+      priority = 10
+      match_rules {
+        prefix_match = "/api/region"
+      }
+      route_action {
+        weighted_backend_services {
+          weight = 100
+          backend_service = google_compute_backend_service.app_region.id
+        }
+      }
+    }
   }
 }
 

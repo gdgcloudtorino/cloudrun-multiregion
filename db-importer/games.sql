@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS games (
 );
 -- https://cloud.google.com/sql/docs/postgres/understand-example-embedding-workflow?hl=it
 CREATE INDEX games_embed_idx ON games
-  USING hnsw (embedding vector_cosine_ops);
+  USING hnsw (game_embedding vector_cosine_ops);
 
 -- INSERT INTO games (name, description)
 -- VALUES (
