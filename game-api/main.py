@@ -76,7 +76,7 @@ def get_games():
         app.logger.exception("Error getting games")
         return jsonify({'error': str(e)}), 500
 
-@app.route('/api/games', methods=['POST'])
+@app.route('/api/games/add', methods=['POST'])
 def create_game():
     try:
         data = request.get_json(force=True)

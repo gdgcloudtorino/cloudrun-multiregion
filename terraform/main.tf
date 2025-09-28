@@ -30,39 +30,39 @@ module "gcs_proxy_eu" {
   source     = "../gcs-proxy"
   project_id = var.project_id
   region     = var.region_1
-  gcs_bucket = "${var.gcs_bucket}"
+  gcs_bucket = var.gcs_bucket
 }
 
 module "gcs_proxy_us" {
   source     = "../gcs-proxy"
   project_id = var.project_id
   region     = var.region_2
-  gcs_bucket = "${var.gcs_bucket}"
+  gcs_bucket = var.gcs_bucket
 }
 module "game_db" {
-  source = "../database"
+  source     = "../database"
   project_id = var.project_id
   region     = var.region_1
-  region_us = var.region_2
+  region_us  = var.region_2
 }
 
 module "game_api_eu" {
-  source     = "../game-api"
-  project_id = var.project_id
-  region     = var.region_1
+  source                = "../game-api"
+  project_id            = var.project_id
+  region                = var.region_1
   db_password_secret_id = module.game_db.secret_db_password
-  db_host = module.game_db.db_host
-  db_user =  module.game_db.db_user
-  db_name = module.game_db.db_name
+  db_host               = module.game_db.db_host
+  db_user               = module.game_db.db_user
+  db_name               = module.game_db.db_name
 }
 module "game_api_us" {
-  source     = "../game-api"
-  project_id = var.project_id
-  region     = var.region_2
+  source                = "../game-api"
+  project_id            = var.project_id
+  region                = var.region_2
   db_password_secret_id = module.game_db.secret_db_password
-  db_host = module.game_db.db_host
-  db_user =  module.game_db.db_user
-  db_name = module.game_db.db_name
+  db_host               = module.game_db.db_host
+  db_user               = module.game_db.db_user
+  db_name               = module.game_db.db_name
 }
 
 # Create two serverless network endpoint groups (NEGs)
@@ -205,75 +205,87 @@ resource "google_compute_url_map" "default" {
   name            = "multi-region-url-map"
   default_service = google_compute_backend_service.app_region.id
   host_rule {
-    hosts       = ["*"]
+    hosts        = ["*"]
     path_matcher = "multi-region-path-matcher"
   }
-  
-  path_matcher {
-    name = "multi-region-path-matcher"
-    default_service = google_compute_backend_service.app_region.id
-    route_rules {
-      priority = 1
-      match_rules {
-        header_matches {
-          header_name = "Method" # Match on the HTTP method pseudo-header
-          exact_match = "POST"
 
-        }
-        prefix_match = "/api/games"
-      }
-      route_action {
-        weighted_backend_services {
-          weight = 100
-          backend_service = google_compute_backend_service.game_api_main.id
-        }
-      }
+  path_matcher {
+    name            = "multi-region-path-matcher"
+    default_service = google_compute_backend_service.app_region.id
+    path_rule {
+      paths   = ["/api/games/add"]
+      service = google_compute_backend_service.game_api_main.id
     }
-    route_rules {
-      priority = 2
-      match_rules {
-        header_matches {
-          header_name = "Method" # Match on the HTTP method pseudo-header
-          exact_match = "GET"
-        }
-        prefix_match = "/api/games"
-      }
-      route_action {
-        weighted_backend_services {
-          weight = 100
-          backend_service = google_compute_backend_service.game_api.id
-        }
-      }
+    path_rule {
+      paths   = ["/api/games/*"]
+      service = google_compute_backend_service.game_api.id
     }
-    
-    route_rules {
-      priority = 4
-      match_rules {
-         header_matches {
-          header_name = "Method" # Match on the HTTP method pseudo-header
-          exact_match = "GET"
-        }
-        prefix_match = "/storage"
-      }
-      route_action {
-        weighted_backend_services {
-          weight = 100
-          backend_service = google_compute_backend_service.gsc_proxy.id
-        }
-      }
+    path_rule {
+      paths   = ["/api/region/*"]
+      service = google_compute_backend_service.app_region.id
     }
-    route_rules {
-      priority = 10
-      match_rules {
-        prefix_match = "/api/region"
-      }
-      route_action {
-        weighted_backend_services {
-          weight = 100
-          backend_service = google_compute_backend_service.app_region.id
-        }
-      }
+    path_rule {
+      paths   = ["/storage/**"]
+      service = google_compute_backend_service.gsc_proxy.id
     }
+    #   route_rules {
+    #     priority = 1
+    #     match_rules {
+    #       header_matches {
+    #         header_name = "Method" # Match on the HTTP method pseudo-header
+    #         exact_match = "POST"
+
+    #       }
+    #       prefix_match = "/api/games"
+    #     }
+    #     route_action {
+    #       weighted_backend_services {
+    #         weight = 100
+    #         backend_service = google_compute_backend_service.game_api_main.id
+    #       }
+    #     }
+    #   }
+    #   route_rules {
+    #     priority = 2
+    #     match_rules {
+    #       # header_matches {
+    #       #   header_name = "Method" # Match on the HTTP method pseudo-header
+    #       #   exact_match = "GET"
+    #       # }
+    #       prefix_match = "/api/games"
+    #     }
+    #     route_action {
+    #       weighted_backend_services {
+    #         weight = 100
+    #         backend_service = google_compute_backend_service.game_api.id
+    #       }
+    #     }
+    #   }
+
+    #   route_rules {
+    #     priority = 4
+    #     match_rules {
+    #       prefix_match = "/storage"
+    #     }
+    #     route_action {
+    #       weighted_backend_services {
+    #         weight = 100
+    #         backend_service = google_compute_backend_service.gsc_proxy.id
+    #       }
+    #     }
+    #   }
+    #   route_rules {
+    #     priority = 10
+    #     match_rules {
+    #       prefix_match = "/api/region"
+    #     }
+    #     route_action {
+    #       weighted_backend_services {
+    #         weight = 100
+    #         backend_service = google_compute_backend_service.app_region.id
+    #       }
+    #     }
+    #   }
   }
 }
 

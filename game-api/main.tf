@@ -14,6 +14,13 @@ resource "google_secret_manager_secret_iam_member" "secret_accessor_db" {
   member    = "serviceAccount:${google_service_account.default.email}"
 }
 
+# Grant the service account permission to use Vertex AI
+resource "google_project_iam_member" "vertex_ai_user" {
+  project = var.project_id
+  role    = "roles/aiplatform.user"
+  member  = "serviceAccount:${google_service_account.default.email}"
+}
+
 # The Cloud Run service that runs the game API
 resource "google_cloud_run_v2_service" "service" {
   name     = var.service_name
