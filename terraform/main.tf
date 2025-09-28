@@ -211,23 +211,20 @@ resource "google_compute_url_map" "default" {
 
   path_matcher {
     name            = "multi-region-path-matcher"
-    default_service = google_compute_backend_service.app_region.id
+    
     path_rule {
       paths   = ["/api/games/add"]
       service = google_compute_backend_service.game_api_main.id
     }
     path_rule {
-      paths   = ["/api/games/*"]
+      paths   = ["/api/games/**"]
       service = google_compute_backend_service.game_api.id
-    }
-    path_rule {
-      paths   = ["/api/region/*"]
-      service = google_compute_backend_service.app_region.id
     }
     path_rule {
       paths   = ["/storage/**"]
       service = google_compute_backend_service.gsc_proxy.id
     }
+    default_service = google_compute_backend_service.app_region.id
     #   route_rules {
     #     priority = 1
     #     match_rules {
