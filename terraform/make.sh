@@ -12,8 +12,7 @@ GCS_PROXY_US=$(terraform output -raw gcs_proxy_us)
 GCS_PROXY_EU=$(terraform output -raw gcs_proxy_eu)
 GAME_US=$(terraform output -raw gcs_proxy_us)
 GAME_EU=$(terraform output -raw gcs_proxy_eu)
-echo "RUN INIT DB JOB gcloud run jobs execute  db-importer-job --region=europe-west8"
-gcloud run jobs execute db-importer-job --region=europe-west8
+
 # Export the variables and save them to a .env file
 echo "Exporting Terraform outputs to ../.env"
 {
