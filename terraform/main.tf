@@ -305,18 +305,18 @@ resource "google_compute_global_forwarding_rule" "default" {
 
 
 # Build and push the db-importer container image
-resource "null_resource" "db_importer_image" {
-  triggers = {
-    main_py          = filemd5("../db-importer/main.py")
-    games_sql        = filemd5("../db-importer/games.sql")
-    dockerfile       = filemd5("../db-importer/Dockerfile")
-    requirements_txt = filemd5("../db-importer/requirements.txt")
-  }
+# resource "null_resource" "db_importer_image" {
+#   triggers = {
+#     main_py          = filemd5("../db-importer/main.py")
+#     games_sql        = filemd5("../db-importer/games.sql")
+#     dockerfile       = filemd5("../db-importer/Dockerfile")
+#     requirements_txt = filemd5("../db-importer/requirements.txt")
+#   }
 
-  provisioner "local-exec" {
-    command = "gcloud builds submit --project=${var.project_id} --tag ${var.artifact_registry_location}-docker.pkg.dev/${var.project_id}/${var.artifact_registry_name}/db-importer-job:latest ../db-importer"
-  }
-}
+#   provisioner "local-exec" {
+#     command = "gcloud builds submit --project=${var.project_id} --tag ${var.artifact_registry_location}-docker.pkg.dev/${var.project_id}/${var.artifact_registry_name}/db-importer-job:latest ../db-importer"
+#   }
+# }
 
 # Create a Cloud Run Job to import the database data
 module "db_importer_job" {
@@ -328,7 +328,7 @@ module "db_importer_job" {
   db_user               = module.game_db.db_user
   db_password_secret_id = module.game_db.secret_db_password
 
-  depends_on = [null_resource.db_importer_image]
+  # depends_on = [null_resource.db_importer_image]
 }
 
 output "db_importer_job_name" {
