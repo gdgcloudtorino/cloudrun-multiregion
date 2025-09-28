@@ -35,7 +35,7 @@ resource "google_sql_database_instance" "read_replica" {
   region                = var.region_us
   project               = var.project_id
   master_instance_name  = google_sql_database_instance.default.name
-
+  deletion_protection = false
   settings {
     tier = var.tier
     edition = "ENTERPRISE"

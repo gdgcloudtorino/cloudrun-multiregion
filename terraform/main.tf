@@ -157,7 +157,7 @@ resource "google_compute_region_network_endpoint_group" "game_api_eu" {
 }
 
 resource "google_compute_region_network_endpoint_group" "game_api_us" {
-  name                  = "gcs-proxy-region-neg-2"
+  name                  = "game-api-region-neg-2"
   region                = var.region_2
   provider              = google-beta
   network_endpoint_type = "SERVERLESS"
@@ -166,10 +166,19 @@ resource "google_compute_region_network_endpoint_group" "game_api_us" {
     service = module.game_api_us.name
   }
 }
+resource "google_compute_backend_service" "game_api_main" {
+  name                  = "gcs-backend-primary-service"
+  protocol              = "HTTP"
+  load_balancing_scheme = "EXTERNAL_MANAGED"
+  enable_cdn            = false # Set to true to enable Cloud CDN
 
+  backend {
+    group = google_compute_region_network_endpoint_group.game_api_eu.id
+  }
+}
 
 resource "google_compute_backend_service" "game_api" {
-  name                  = "gcs-backend-service"
+  name                  = "game-backend-service"
   protocol              = "HTTP"
   load_balancing_scheme = "EXTERNAL_MANAGED"
   enable_cdn            = false # Set to true to enable Cloud CDN
@@ -191,10 +200,21 @@ resource "google_compute_url_map" "default" {
     hosts       = ["*"]
     path_matcher = "multi-region-path-matcher"
   }
+  
   path_matcher {
     name = "multi-region-path-matcher"
     default_service = google_compute_backend_service.app_region.id
-    
+    route_rules {
+      priority = 1
+      match_rules {
+        header_matches {
+          header_name = "Method" # Match on the HTTP method pseudo-header
+          exact_match = "POST"
+        }
+        prefix_match = "/api/games"
+      }
+      service = google_compute_backend_service.game_api_main.id
+    }
     path_rule {
       paths = ["/api/region"]
       service = google_compute_backend_service.app_region.id
@@ -208,6 +228,7 @@ resource "google_compute_url_map" "default" {
       paths = ["/storage/*"]
       service = google_compute_backend_service.gsc_proxy.id
     }
+    
   }
 }
 
