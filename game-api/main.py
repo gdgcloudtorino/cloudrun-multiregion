@@ -9,9 +9,10 @@ from google.genai.types import EmbedContentConfig
 app = Flask(__name__)
 # AttributeError: module 'google.generativeai' has no attribute 'get_embedding_model'
 # Configure the generative AI model
-client = genai.Client()
+
 model="gemini-embedding-001"
 def embed_content(model,content):
+    client = genai.Client()
     response = client.models.embed_content(
         model=model,
         contents=[

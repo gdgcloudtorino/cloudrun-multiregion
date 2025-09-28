@@ -12,34 +12,7 @@ resource "google_compute_global_address" "default" {
   name = "multi-region-lb-ip"
 }
 
-resource "google_apikeys_key" "gemini" {
-  name         = "gemini-api-key"
-  display_name = "Gemini API KEY"
 
-  restrictions {
-        # Example of whitelisting Maps Javascript API and Places API only
-        api_targets {
-            service = "generativelanguage.googleapis.com"
-        }
-  }
-}
-
-# Create a secret for the Gemini API key
-resource "google_secret_manager_secret" "gemini_api_key" {
-  secret_id = "gemini-api-key"
-  project   = var.project_id
-
-  replication {
-    auto {
-      
-    }
-  }
-}
-
-resource "google_secret_manager_secret_version" "gemini_api_key" {
-  secret      = google_secret_manager_secret.gemini_api_key.id
-  secret_data = google_apikeys_key.gemini.key_string
-}
 
 module "app_region_eu" {
   source     = "../app-region"
@@ -227,7 +200,7 @@ resource "null_resource" "db_importer_image" {
   }
 
   provisioner "local-exec" {
-    command = "gcloud builds submit --project=${var.project_id} --tag gcr.io/${var.project_id}/db-importer-job:latest ../db-importer"
+    command = "gcloud builds submit --project=${var.project_id} --tag ${var.artifact_registry_location}-docker.pkg.dev/${var.project_id}/${var.artifact_registry_name}/db-importer-job:latest ../db-importer"
   }
 }
 

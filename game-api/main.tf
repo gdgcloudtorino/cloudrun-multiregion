@@ -76,7 +76,7 @@ resource "google_cloud_run_v2_service" "service" {
       }
     }# end container
   }#end template
-  depends_on = [ google_secret_manager_secret_iam_member.secret_accessor_db, google_secret_manager_secret_iam_member.secret_accessor_gemini ]
+  depends_on = [ google_secret_manager_secret_iam_member.secret_accessor_db ]
     
 }# end service
 
