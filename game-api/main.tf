@@ -13,12 +13,7 @@ resource "google_secret_manager_secret_iam_member" "secret_accessor_db" {
   role      = "roles/secretmanager.secretAccessor"
   member    = "serviceAccount:${google_service_account.default.email}"
 }
-resource "google_secret_manager_secret_iam_member" "secret_accessor_gemini" {
-  project   = var.project_id
-  secret_id = var.gemini_api_key_secret_id
-  role      = "roles/secretmanager.secretAccessor"
-  member    = "serviceAccount:${google_service_account.default.email}"
-}
+
 # The Cloud Run service that runs the game API
 resource "google_cloud_run_v2_service" "service" {
   name     = var.service_name
@@ -43,19 +38,22 @@ resource "google_cloud_run_v2_service" "service" {
         value = var.db_host
       }
       env {
+        name = "GOOGLE_GENAI_USE_VERTEXAI"
+        value = "true"
+      }
+      env {
+        name = "GOOGLE_CLOUD_PROJECT"
+        value = var.project_id
+      }
+      env {
+        name = "GOOGLE_CLOUD_LOCATION"
+        value = var.region
+      }
+      env {
         name = "DB_PASS"
         value_source {
           secret_key_ref {
             secret  = var.db_password_secret_id
-            version = "latest"
-          }
-        }
-      }
-      env {
-        name = "GEMINI_API_KEY"
-        value_source {
-          secret_key_ref {
-            secret  = var.gemini_api_key_secret_id
             version = "latest"
           }
         }

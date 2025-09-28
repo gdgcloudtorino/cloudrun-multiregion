@@ -14,7 +14,8 @@ resource "google_compute_global_address" "default" {
 
 resource "google_apikeys_key" "gemini" {
   name         = "gemini-api-key"
-  
+  display_name = "Gemini API KEY"
+
   restrictions {
         # Example of whitelisting Maps Javascript API and Places API only
         api_targets {
@@ -69,6 +70,7 @@ module "game_db" {
   source = "../database"
   project_id = var.project_id
   region     = var.region_1
+  region_us = var.region_2
 }
 
 module "game_api_eu" {
@@ -76,18 +78,15 @@ module "game_api_eu" {
   project_id = var.project_id
   region     = var.region_1
   db_password_secret_id = module.game_db.secret_db_password
-  gemini_api_key_secret_id = google_secret_manager_secret.gemini_api_key.secret_id
   db_host = module.game_db.db_host
   db_user =  module.game_db.db_user
   db_name = module.game_db.db_name
 }
-
 module "game_api_us" {
   source     = "../game-api"
   project_id = var.project_id
   region     = var.region_2
   db_password_secret_id = module.game_db.secret_db_password
-  gemini_api_key_secret_id = google_secret_manager_secret.gemini_api_key.secret_id
   db_host = module.game_db.db_host
   db_user =  module.game_db.db_user
   db_name = module.game_db.db_name

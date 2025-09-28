@@ -35,7 +35,4 @@ variable "db_user" {
 variable "db_password_secret_id" {
   type = string
 }
-variable "gemini_api_key_secret_id" {
-  description = "The API key for the Gemini model."
-  type        = string
-}
+

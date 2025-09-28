@@ -4,13 +4,12 @@ from flask import Flask, jsonify, request
 import psycopg
 from pgvector.psycopg import register_vector
 from google import genai
+from google.genai.types import HttpOptions
 from google.genai.types import EmbedContentConfig
 app = Flask(__name__)
 # AttributeError: module 'google.generativeai' has no attribute 'get_embedding_model'
 # Configure the generative AI model
-client = genai.Client(
-        api_key=os.environ.get("GEMINI_API_KEY"),
-    )
+client = genai.Client()
 model="gemini-embedding-001"
 def embed_content(model,content):
     response = client.models.embed_content(
