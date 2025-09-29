@@ -79,10 +79,19 @@ invoke_service "http://${LOAD_BALANCER_IP}/api/region" "Load Balancer"
 
 
 # invoke with a load balancer
-get_image "http://${LOAD_BALANCER_IP}/storage/test_1.jpeg" "app-region (${APP_REGION_2})"
+get_image "http://${LOAD_BALANCER_IP}/storage/test_1.jpeg" "Load Balancer"
 
 
 invoke_service "http://${LOAD_BALANCER_IP}/api/games?q=Tigelle" "Load Balancer"
 
+
+invoke_service "http://${LOAD_BALANCER_IP}/nginx/api/region" "Load Balancer (Nginx)"
+
+
+# invoke with a load balancer
+get_image "http://${LOAD_BALANCER_IP}/nginx/storage/test_1.jpeg" "Load Balancer (Nginx)"
+
+
+invoke_service "http://${LOAD_BALANCER_IP}/nginx/api/games?q=Tigelle" "Load Balancer (Nginx)"
 
 echo "--- Test Complete ---"

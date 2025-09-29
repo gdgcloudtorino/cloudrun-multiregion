@@ -70,7 +70,6 @@ module "game_api_us" {
 resource "google_compute_region_network_endpoint_group" "neg_1" {
   name                  = "multi-region-neg-1"
   region                = var.region_1
-  provider              = google-beta
   network_endpoint_type = "SERVERLESS"
   project               = data.google_project.project.project_id
   cloud_run {
@@ -81,7 +80,6 @@ resource "google_compute_region_network_endpoint_group" "neg_1" {
 resource "google_compute_region_network_endpoint_group" "neg_2" {
   name                  = "multi-region-neg-2"
   region                = var.region_2
-  provider              = google-beta
   network_endpoint_type = "SERVERLESS"
   project               = data.google_project.project.project_id
   cloud_run {
@@ -109,7 +107,6 @@ resource "google_compute_backend_service" "app_region" {
 resource "google_compute_region_network_endpoint_group" "gsc_proxy_neg_1" {
   name                  = "gcs-proxy-region-neg-1"
   region                = var.region_1
-  provider              = google-beta
   network_endpoint_type = "SERVERLESS"
   project               = data.google_project.project.project_id
   cloud_run {
@@ -120,7 +117,6 @@ resource "google_compute_region_network_endpoint_group" "gsc_proxy_neg_1" {
 resource "google_compute_region_network_endpoint_group" "gsc_proxy_neg_2" {
   name                  = "gcs-proxy-region-neg-2"
   region                = var.region_2
-  provider              = google-beta
   network_endpoint_type = "SERVERLESS"
   project               = data.google_project.project.project_id
   cloud_run {
@@ -152,7 +148,6 @@ resource "google_compute_backend_service" "gsc_proxy" {
 resource "google_compute_region_network_endpoint_group" "game_api_eu" {
   name                  = "game-api-region-neg-1"
   region                = var.region_1
-  provider              = google-beta
   network_endpoint_type = "SERVERLESS"
   project               = data.google_project.project.project_id
   cloud_run {
@@ -163,7 +158,6 @@ resource "google_compute_region_network_endpoint_group" "game_api_eu" {
 resource "google_compute_region_network_endpoint_group" "game_api_us" {
   name                  = "game-api-region-neg-2"
   region                = var.region_2
-  provider              = google-beta
   network_endpoint_type = "SERVERLESS"
   project               = data.google_project.project.project_id
   cloud_run {
@@ -171,7 +165,7 @@ resource "google_compute_region_network_endpoint_group" "game_api_us" {
   }
 }
 resource "google_compute_backend_service" "game_api_main" {
-  name                  = "gcs-backend-primary-service"
+  name                  = "game-backend-primary-service"
   protocol              = "HTTP"
   load_balancing_scheme = "EXTERNAL_MANAGED"
   enable_cdn            = false # Set to true to enable Cloud CDN
@@ -200,6 +194,219 @@ resource "google_compute_backend_service" "game_api" {
   }
 }
 
+# Nginx instance template for region 1
+resource "google_compute_instance_template" "nginx_template_1" {
+  name_prefix  = "nginx-template-1-v2-"
+  machine_type = "e2-micro"
+  region       = var.region_1
+
+  disk {
+    source_image = "debian-cloud/debian-12"
+    auto_delete  = true
+    boot         = true
+  }
+
+  network_interface {
+    network = "default"
+    access_config {
+      // Ephemeral IP
+    }
+  }
+
+  metadata_startup_script = <<-EOT
+    #!/bin/bash
+    sudo apt-get update
+    sudo apt-get install -y nginx
+    
+    cat <<EOF | sudo tee /etc/nginx/sites-available/reverse-proxy
+    server {
+        listen 80;
+        server_name _;
+
+        location /nginx/api/games {
+            proxy_pass ${module.game_api_eu.uri}/api/games;
+            proxy_set_header X-Real-IP \$remote_addr;
+            proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto \$scheme;
+        }
+
+
+        location /nginx/storage/ {
+            proxy_pass ${module.gcs_proxy_eu.uri}/storage;
+            proxy_set_header Host ${module.gcs_proxy_eu.uri};
+            proxy_set_header X-Real-IP \$remote_addr;
+            proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto \$scheme;
+        }
+
+        location /nginx/ {
+            proxy_pass ${module.app_region_eu.uri};
+            proxy_set_header X-Real-IP \$remote_addr;
+            proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto \$scheme;
+        }
+        location /healthz {
+            proxy_pass ${module.app_region_eu.uri}/healthz;
+            proxy_set_header X-Real-IP \$remote_addr;
+            proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto \$scheme;
+        }
+    }
+    EOF
+
+    sudo ln -s /etc/nginx/sites-available/reverse-proxy /etc/nginx/sites-enabled/
+    sudo rm /etc/nginx/sites-enabled/default
+    sudo service nginx restart
+  EOT
+}
+
+# Nginx instance template for region 2
+resource "google_compute_instance_template" "nginx_template_2" {
+  name_prefix  = "nginx-template-2-v2-"
+  machine_type = "e2-micro"
+  region       = var.region_2
+
+  disk {
+    source_image = "debian-cloud/debian-12"
+    auto_delete  = true
+    boot         = true
+  }
+
+  network_interface {
+    network = "default"
+    access_config {
+      // Ephemeral IP
+    }
+  }
+
+  metadata_startup_script = <<-EOT
+    #!/bin/bash
+    sudo apt-get update
+    sudo apt-get install -y nginx
+    
+    cat <<EOF | sudo tee /etc/nginx/sites-available/reverse-proxy
+    server {
+        listen 80;
+        server_name _;
+
+        location /nginx/api/games/add {
+            proxy_pass ${module.game_api_eu.uri}/api/games/add;
+            proxy_set_header X-Real-IP \$remote_addr;
+            proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto \$scheme;
+        }
+
+        location /nginx/api/games {
+            proxy_pass ${module.game_api_us.uri}/api/games;
+            proxy_set_header X-Real-IP \$remote_addr;
+            proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto \$scheme;
+        }
+
+
+        location /nginx/storage/ {
+            proxy_pass ${module.gcs_proxy_us.uri}/storage;
+            proxy_set_header X-Real-IP \$remote_addr;
+            proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto \$scheme;
+        }
+
+        location /nginx/ {
+            proxy_pass ${module.app_region_us.uri};
+            proxy_set_header X-Real-IP \$remote_addr;
+            proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto \$scheme;
+        }
+        location /healthz {
+            proxy_pass ${module.app_region_us.uri}/healthz;
+            proxy_set_header X-Real-IP \$remote_addr;
+            proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto \$scheme;
+        }
+    }
+    EOF
+
+    sudo ln -s /etc/nginx/sites-available/reverse-proxy /etc/nginx/sites-enabled/
+    sudo rm /etc/nginx/sites-enabled/default
+    sudo service nginx restart
+  EOT
+}
+
+# Nginx managed instance group in region 1
+resource "google_compute_region_instance_group_manager" "nginx_mig_1" {
+  name               = "nginx-mig-1"
+  base_instance_name = "nginx-1"
+  region             = var.region_1
+  named_port {
+    name = "http"
+    port = 80
+  }
+  target_size        = 1
+  version {
+    instance_template  = google_compute_instance_template.nginx_template_1.id
+  }
+}
+
+# Nginx managed instance group in region 2
+resource "google_compute_region_instance_group_manager" "nginx_mig_2" {
+  name               = "nginx-mig-2"
+  base_instance_name = "nginx-2"
+  region             = var.region_2
+  target_size        = 1
+  named_port {
+    name = "http"
+    port = 80
+  }
+  version {
+    instance_template  = google_compute_instance_template.nginx_template_2.id
+  }
+}
+
+# Firewall rule to allow health checks to Nginx instances
+resource "google_compute_firewall" "allow_nginx_health_checks" {
+  name    = "allow-nginx-health-checks"
+  network = "default"
+
+  allow {
+    protocol = "tcp"
+    ports    = ["80"]
+  }
+
+  source_ranges = ["35.191.0.0/16", "130.211.0.0/22"]
+  target_tags   = ["nginx"]
+}
+
+# Health check for the Nginx backend service
+resource "google_compute_health_check" "nginx_health_check" {
+  name                = "nginx-health-check"
+  check_interval_sec  = 5
+  timeout_sec         = 5
+  healthy_threshold   = 2
+  unhealthy_threshold = 2
+
+  http_health_check {
+    port         = 80
+    request_path = "/healthz"
+  }
+}
+
+# Backend service for the Nginx instance groups
+resource "google_compute_backend_service" "nginx_backend_service" {
+  name                  = "nginx-backend-service"
+  protocol              = "HTTP"
+  load_balancing_scheme = "EXTERNAL_MANAGED"
+  health_checks         = [google_compute_health_check.nginx_health_check.id]
+
+  backend {
+    group = google_compute_region_instance_group_manager.nginx_mig_1.instance_group
+  }
+
+  backend {
+    group = google_compute_region_instance_group_manager.nginx_mig_2.instance_group
+  }
+}
+
+
 # Create a URL map to route all incoming requests to the backend service
 resource "google_compute_url_map" "default" {
   name            = "multi-region-url-map"
@@ -217,72 +424,22 @@ resource "google_compute_url_map" "default" {
       service = google_compute_backend_service.game_api_main.id
     }
     path_rule {
-      paths   = ["/api/games/*","/api/games","/api/games*"]
+      paths   = ["/api/games/*","/api/games"]
       service = google_compute_backend_service.game_api.id
     }
     path_rule {
-      paths   = ["/storage/*","/storage/**"]
+      paths   = ["/storage/*",]
       service = google_compute_backend_service.gsc_proxy.id
     }
+    path_rule {
+      paths   = ["/api/region/*","/api/region"]
+      service = google_compute_backend_service.app_region.id
+    }
+    path_rule {
+      paths   = ["/nginx/*"]
+      service = google_compute_backend_service.nginx_backend_service.id
+    }
     default_service = google_compute_backend_service.app_region.id
-    #   route_rules {
-    #     priority = 1
-    #     match_rules {
-    #       header_matches {
-    #         header_name = "Method" # Match on the HTTP method pseudo-header
-    #         exact_match = "POST"
-
-    #       }
-    #       prefix_match = "/api/games"
-    #     }
-    #     route_action {
-    #       weighted_backend_services {
-    #         weight = 100
-    #         backend_service = google_compute_backend_service.game_api_main.id
-    #       }
-    #     }
-    #   }
-    #   route_rules {
-    #     priority = 2
-    #     match_rules {
-    #       # header_matches {
-    #       #   header_name = "Method" # Match on the HTTP method pseudo-header
-    #       #   exact_match = "GET"
-    #       # }
-    #       prefix_match = "/api/games"
-    #     }
-    #     route_action {
-    #       weighted_backend_services {
-    #         weight = 100
-    #         backend_service = google_compute_backend_service.game_api.id
-    #       }
-    #     }
-    #   }
-
-    #   route_rules {
-    #     priority = 4
-    #     match_rules {
-    #       prefix_match = "/storage"
-    #     }
-    #     route_action {
-    #       weighted_backend_services {
-    #         weight = 100
-    #         backend_service = google_compute_backend_service.gsc_proxy.id
-    #       }
-    #     }
-    #   }
-    #   route_rules {
-    #     priority = 10
-    #     match_rules {
-    #       prefix_match = "/api/region"
-    #     }
-    #     route_action {
-    #       weighted_backend_services {
-    #         weight = 100
-    #         backend_service = google_compute_backend_service.app_region.id
-    #       }
-    #     }
-    #   }
   }
 }
 
