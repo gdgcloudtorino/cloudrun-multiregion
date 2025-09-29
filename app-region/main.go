@@ -18,6 +18,7 @@ func main() {
 	regionCache = os.Getenv("REGION")
 
 	http.HandleFunc("/healthz", healthCheckHandler)
+	http.HandleFunc("/q/health", healthCheckHandler)
 	http.HandleFunc("/api/region", regionHandler)
 
 	// Cloud Run imposta la variabile d'ambiente PORT.

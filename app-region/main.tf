@@ -29,8 +29,8 @@ resource "google_cloud_run_v2_service" "service" {
         }
       }
       liveness_probe {
-        failure_threshold = 1
-        period_seconds = 1
+        failure_threshold = 3
+        period_seconds = 3
         http_get {
           path = "/healthz"
         }

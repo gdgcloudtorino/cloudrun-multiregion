@@ -199,7 +199,8 @@ resource "google_compute_instance_template" "nginx_template_1" {
   name_prefix  = "nginx-template-1-v2-"
   machine_type = "e2-micro"
   region       = var.region_1
-
+  
+  tags = [ "nginx" ]
   disk {
     source_image = "debian-cloud/debian-12"
     auto_delete  = true
@@ -231,22 +232,21 @@ resource "google_compute_instance_template" "nginx_template_1" {
         }
 
 
-        location /nginx/storage/ {
+        location /nginx/storage {
             proxy_pass ${module.gcs_proxy_eu.uri}/storage;
-            proxy_set_header Host ${module.gcs_proxy_eu.uri};
             proxy_set_header X-Real-IP \$remote_addr;
             proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
             proxy_set_header X-Forwarded-Proto \$scheme;
         }
 
-        location /nginx/ {
-            proxy_pass ${module.app_region_eu.uri};
+        location /nginx/api/region {
+            proxy_pass ${module.app_region_eu.uri}/api/region;
             proxy_set_header X-Real-IP \$remote_addr;
             proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
             proxy_set_header X-Forwarded-Proto \$scheme;
         }
         location /healthz {
-            proxy_pass ${module.app_region_eu.uri}/healthz;
+            proxy_pass ${module.app_region_eu.uri}/q/health;
             proxy_set_header X-Real-IP \$remote_addr;
             proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
             proxy_set_header X-Forwarded-Proto \$scheme;
@@ -265,7 +265,7 @@ resource "google_compute_instance_template" "nginx_template_2" {
   name_prefix  = "nginx-template-2-v2-"
   machine_type = "e2-micro"
   region       = var.region_2
-
+  tags = [ "nginx" ]
   disk {
     source_image = "debian-cloud/debian-12"
     auto_delete  = true
@@ -274,6 +274,7 @@ resource "google_compute_instance_template" "nginx_template_2" {
 
   network_interface {
     network = "default"
+
     access_config {
       // Ephemeral IP
     }
@@ -310,15 +311,14 @@ resource "google_compute_instance_template" "nginx_template_2" {
             proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
             proxy_set_header X-Forwarded-Proto \$scheme;
         }
-
-        location /nginx/ {
-            proxy_pass ${module.app_region_us.uri};
+        location /nginx/api/region {
+            proxy_pass ${module.app_region_us.uri}/api/region;
             proxy_set_header X-Real-IP \$remote_addr;
             proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
             proxy_set_header X-Forwarded-Proto \$scheme;
         }
         location /healthz {
-            proxy_pass ${module.app_region_us.uri}/healthz;
+            proxy_pass ${module.app_region_us.uri}/q/health;
             proxy_set_header X-Real-IP \$remote_addr;
             proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
             proxy_set_header X-Forwarded-Proto \$scheme;
@@ -345,6 +345,9 @@ resource "google_compute_region_instance_group_manager" "nginx_mig_1" {
   version {
     instance_template  = google_compute_instance_template.nginx_template_1.id
   }
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 # Nginx managed instance group in region 2
@@ -359,6 +362,9 @@ resource "google_compute_region_instance_group_manager" "nginx_mig_2" {
   }
   version {
     instance_template  = google_compute_instance_template.nginx_template_2.id
+  }
+  lifecycle {
+    create_before_destroy = true
   }
 }
 
