@@ -217,11 +217,11 @@ resource "google_compute_url_map" "default" {
       service = google_compute_backend_service.game_api_main.id
     }
     path_rule {
-      paths   = ["/api/games/**"]
+      paths   = ["/api/games/*","/api/games","/api/games*"]
       service = google_compute_backend_service.game_api.id
     }
     path_rule {
-      paths   = ["/storage/**"]
+      paths   = ["/storage/*","/storage/**"]
       service = google_compute_backend_service.gsc_proxy.id
     }
     default_service = google_compute_backend_service.app_region.id
